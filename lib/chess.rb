@@ -2,7 +2,7 @@ class Board
   attr_accessor :board
   def initialize
     @board = Array.new(8) {Array.new(8, " ")}
-    @board[6] = Array.new(8) {|i| Pawn.new("black", "ABCDEFGH"[i], 7)}
+    @board[6] = Array.new(8) {|i| Pawn.new(self, "black", "ABCDEFGH"[i], 7)}
   end
 
   # move from a_file, a_rank to b_file, b_rank
@@ -12,6 +12,7 @@ class Board
       @board[a_rank - 1]["ABCDEFGH".index(a_file)] = " "
       @board[b_rank - 1]["ABCDEFGH".index(b_file)].file = b_file
       @board[b_rank - 1]["ABCDEFGH".index(b_file)].rank = b_rank
+      @board[b_rank - 1]["ABCDEFGH".index(b_file)].set_pos(0,0)
     end
   end
 
@@ -25,23 +26,23 @@ end
 class Piece
   attr_writer :file, :rank
 
-  def initialize(color, file, rank)
+  def initialize(board, color, file, rank)
+    @board = board
     color == "white" ? @white = true : @white = false
     @rank = rank
     @file = file
   end
 
   def set_pos(file, rank)
-    row = rank - 1
-    col = "ABCDEFGH".index(file)
+    puts @board
   end
 end
 
 class Pawn < Piece
   attr_reader :file, :rank
 
-  def initialize(color, file, rank)
-    super(color, file, rank)
+  def initialize(board, color, file, rank)
+    super(board, color, file, rank)
     @has_moved = false
   end
   
@@ -105,6 +106,6 @@ end
 b = Board.new
 puts b
 b.move_piece("A", 7, "A", 5)
-puts b
+#puts b
 b.move_piece("A", 5, "A", 4)
-puts b
+#puts b
