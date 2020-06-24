@@ -2,18 +2,19 @@ class Board
   attr_accessor :board
   def initialize
     @board = Array.new(8) {Array.new(8, " ")}
-    @board[6] = Array.new(8) {|i| Pawn.new(self, "black", "ABCDEFGH"[i], 7)}
   end
 
   # move from a_file, a_rank to b_file, b_rank
   def move_piece(a_file, a_rank, b_file, b_rank)
-    if @board[a_rank - 1]["ABCDEFGH".index(a_file)].can_move(b_file, b_rank)
-      @board[b_rank - 1]["ABCDEFGH".index(b_file)] = @board[a_rank - 1]["ABCDEFGH".index(a_file)]
-      @board[a_rank - 1]["ABCDEFGH".index(a_file)] = " "
-      @board[b_rank - 1]["ABCDEFGH".index(b_file)].file = b_file
-      @board[b_rank - 1]["ABCDEFGH".index(b_file)].rank = b_rank
-      @board[b_rank - 1]["ABCDEFGH".index(b_file)].set_pos(0,0)
+    if piece_at(a_file, a_rank) != " " && piece_at(a_file, a_rank).can_move(b_file, b_rank)
+      @board[8 - a_rank]["ABCDEFGH".index(a_file)].set_pos(b_file, b_rank)
+    else
+      puts "INVALID MOVE"
     end
+  end
+
+  def piece_at(file, rank)
+    return @board[8 - rank]["ABCDEFGH".index(file)]
   end
 
   def to_s
@@ -34,12 +35,15 @@ class Piece
   end
 
   def set_pos(file, rank)
-    puts @board
+    @board.board[8 - @rank]["ABCDEFGH".index(@file)] = " "
+    @file = file
+    @rank = rank
+    @board.board[8 - rank]["ABCDEFGH".index(file)] = self
   end
 end
 
 class Pawn < Piece
-  attr_reader :file, :rank
+  attr_reader :file, :rank, :white
 
   def initialize(board, color, file, rank)
     super(board, color, file, rank)
@@ -50,8 +54,12 @@ class Pawn < Piece
   def can_move(file, rank)
     #moving to same square
     return false if (file == @file && rank == @rank)
+    
+    curr_file_num = "ABCDEFGH".index(@file)
+    desired_file_num = "ABCDEFGH".index(file)
     #moving forward
     if file == @file
+      return false if @board.piece_at(file, rank) != " "
       # 2 sqares first time      
       if (@white && @rank == 2 && rank == 4) || (!@white && @rank == 7 && rank == 5)
         return true
@@ -60,7 +68,9 @@ class Pawn < Piece
         return true
       end
     # diagonal take
-    elsif (@file - file).abs == 1 && ((@rank - rank == 1 && @white) || (rank - @rank == 1 && !@white))
+    elsif (curr_file_num - desired_file_num).abs == 1 && ((rank - @rank == 1 && @white) || (@rank - rank == 1 && !@white))
+      #can take if piece exists at spot and if they are of opposite color
+      return true if @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == !@white
       #set_pos(file, rank) **take piece**
     else
       return false
@@ -70,6 +80,34 @@ class Pawn < Piece
   def to_s 
     @white ? "*" : "*".light_blue
   end
+end
+
+class Knight < Piece
+  def initialize(board, color, file, rank)
+    super(board, color, file, rank)
+  end
+
+  def can_move(file, rank)
+    return false if (file == @file && rank == @rank)
+
+
+  end
+end
+
+class Bishop < Piece
+
+end
+
+class Rook < Piece
+
+end
+
+class Queen < Piece
+
+end
+
+class King < Piece
+  
 end
 
 class String
@@ -102,10 +140,3 @@ class String
     colorize(36)
   end
 end
-
-b = Board.new
-puts b
-b.move_piece("A", 7, "A", 5)
-#puts b
-b.move_piece("A", 5, "A", 4)
-#puts b
