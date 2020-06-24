@@ -124,7 +124,6 @@ class Bishop < Piece
     vertical_modifier = (@rank > rank ? -1 : 1)
     
     1.upto((@rank - rank).abs - 1) do |i|
-      puts "#{"ABCDEFGH"[curr_file + i * horizontal_modifier]}#{@rank + i * vertical_modifier}"
       if @board.piece_at("ABCDEFGH"[curr_file + i * horizontal_modifier], @rank + i * vertical_modifier) != " "
         return false
       end
@@ -142,26 +141,30 @@ class Rook < Piece
     return false if is_off_board?(file, rank)
 
     return false if (file == @file && rank == @rank)
-    return false if ((file == @file && rank != @rank) || (file != @file && rank == @rank))
-
+    return false if (file != @file && rank != @rank)
+    return false if @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == @white
     # the two statements above confirm that it moves straight either horizontally or vertically
     # now, just need to check whether piece blocking line of sight
     # if moving vertically
 
     if file == @file
       # moving vertically
-      ([@rank, rank].min).upto([@rank, rank].max) do |r|
+      ([@rank, rank].min + 1).upto([@rank, rank].max - 1) do |r|
         return false if @board.piece_at(file, r) != " "
       end
     else
       # moving horizontally 
       curr_file = "ABCDEFGH".index(@file)
       next_file = "ABCDEFGH".index(file)
-      ([curr_file, next_file].min).upto([curr_file, next_file].max) do |f|
-        return false if @board.piece_at(f, rank) != " "
+      ([curr_file, next_file].min + 1).upto([curr_file, next_file].max - 1) do |f|
+        return false if @board.piece_at("ABCDEFGH"[f], rank) != " "
       end
     end
     return true
+  end
+
+  def to_s
+    @white ? "R" : "R".light_blue
   end
 end
 

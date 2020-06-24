@@ -118,3 +118,48 @@ describe Bishop do
     end
   end
 end
+
+describe Rook do
+  describe "#can_move" do
+    it "prevents moving nowhere" do
+      b = Board.new
+      b.board[7][0] = Rook.new(b, "white", "A", 1)
+      expect(b.move_piece("A", 1, "A", 1)).to eql(false)
+    end
+
+    it "prevents moving rank AND file" do
+      b = Board.new
+      b.board[7][0] = Rook.new(b, "white", "A", 1)
+      expect(b.move_piece("A", 1, "B", 2)).to eql(false)
+    end
+    
+    it "doesn't move through allies" do
+      b = Board.new
+      b.board[7][0] = Rook.new(b, "white", "A", 1)
+      b.board[6][0] = Pawn.new(b, "white", "A", 2)
+      expect(b.move_piece("A", 1, "A", 3)).to eql(false)
+    end
+
+    it "doesn't move through enemies" do
+      b = Board.new
+      b.board[7][0] = Rook.new(b, "white", "A", 1)
+      b.board[3][0] = Pawn.new(b, "black", "A", 5)
+      expect(b.move_piece("A", 1, "A", 7)).to eql(false)
+    end
+
+    it "doesn't take allies" do
+      b = Board.new
+      b.board[7][0] = Rook.new(b, "white", "A", 1)
+      b.board[6][0] = Pawn.new(b, "white", "A", 2)
+      expect(b.move_piece("A", 1, "A", 2)).to eql(false)
+    end
+
+    it "takes enemies" do
+      b = Board.new
+      b.board[7][0] = Rook.new(b, "white", "A", 1)
+      b.board[3][0] = Pawn.new(b, "black", "A", 5)
+      b.move_piece("A", 1, "A", 5)
+      expect(b.piece_at("A", 5).to_s).to eql("R")
+    end
+  end
+end
