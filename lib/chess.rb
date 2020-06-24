@@ -8,8 +8,9 @@ class Board
   def move_piece(a_file, a_rank, b_file, b_rank)
     if piece_at(a_file, a_rank) != " " && piece_at(a_file, a_rank).can_move(b_file, b_rank)
       @board[8 - a_rank]["ABCDEFGH".index(a_file)].set_pos(b_file, b_rank)
+      return true
     else
-      puts "INVALID MOVE"
+      return false
     end
   end
 
@@ -85,26 +86,38 @@ end
 class Knight < Piece
   def can_move(file, rank)
     return false if (file == @file || rank == @rank)
-    return (@file - file).abs + (@rank - rank).abs == 3
+    
+    curr_file = "ABCDEFGH".index(@file)
+    next_file = "ABCDEFGH".index(file)
+    if (curr_file - next_file).abs + (@rank - rank).abs == 3
+      return @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == !@white
+    end
+  end
+
+  def to_s
+    @white ? "N" : "N".light_blue
   end
 end
 
 class Bishop < Piece
   def can_move(file, rank)
+    curr_file = "ABCDEFGH".index(@file)
+    next_file = "ABCDEFGH".index(file)
     # false if it doesn't move
     return false if (file == @file || rank == @rank)
     # false if it doesn't move diagnoally
     return false if (curr_file - next_file).abs != (@rank - rank).abs
-
+    # no friendly fire!
+    return false @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == @white
 
     # checks whether there is any piece blocking the line of sight
-    curr_file = "ABCDEFGH".index(@file)
-    next_file = "ABCDEFGH".index(file)
-    ([curr_file, next_file].min).upto([curr_file, next_file].max) do |f|
-      ([@rank, rank].min).upto([@rank, rank].max) do |r|
-        if @board.piece_at(f, r) == " "
-          return false
-        end
+    
+    horizontal_modifier = (curr_file > next_file ? 1 :  -1)
+    vertical_modifier = (@rank > rank ? 1 : -1)
+    
+    1.upto((@rank - rank).abs) do |i|
+      if @board.piece_at("ABCDEFGH"[curr_file + i * horizontal_modifier], @rank + i * vertical_modifier) != " "
+        return false
       end
     end
     return true
@@ -112,8 +125,29 @@ class Bishop < Piece
 end
 
 class Rook < Piece
-  #def can_move(file, rank)
+  def can_move(file, rank)
+    return false if (file == @file && rank == @rank)
+    return false if ((file == @file && rank != @rank) || (file != @file && rank == @rank))
 
+    # the two statements above confirm that it moves straight either horizontally or vertically
+    # now, just need to check whether piece blocking line of sight
+    # if moving vertically
+
+    if file == @file
+      # moving vertically
+      ([@rank, rank].min).upto([@rank, rank].max) do |r|
+        return false if @board.piece_at(file, r) != " "
+      end
+    else
+      # moving horizontally 
+      curr_file = "ABCDEFGH".index(@file)
+      next_file = "ABCDEFGH".index(file)
+      ([curr_file, next_file].min).upto([curr_file, next_file].max) do |f|
+        return false if @board.piece_at(f, rank) != " "
+      end
+    end
+    return true
+  end
 end
 
 class Queen < Piece
