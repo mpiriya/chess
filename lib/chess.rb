@@ -83,22 +83,36 @@ class Pawn < Piece
 end
 
 class Knight < Piece
-  def initialize(board, color, file, rank)
-    super(board, color, file, rank)
-  end
-
   def can_move(file, rank)
-    return false if (file == @file && rank == @rank)
-
-
+    return false if (file == @file || rank == @rank)
+    return (@file - file).abs + (@rank - rank).abs == 3
   end
 end
 
 class Bishop < Piece
+  def can_move(file, rank)
+    # false if it doesn't move
+    return false if (file == @file || rank == @rank)
+    # false if it doesn't move diagnoally
+    return false if (curr_file - next_file).abs != (@rank - rank).abs
 
+
+    # checks whether there is any piece blocking the line of sight
+    curr_file = "ABCDEFGH".index(@file)
+    next_file = "ABCDEFGH".index(file)
+    ([curr_file, next_file].min).upto([curr_file, next_file].max) do |f|
+      ([@rank, rank].min).upto([@rank, rank]max) do |r|
+        if @board.piece_at(f, r) == " "
+          return false
+        end
+      end
+    end
+    return true
+  end
 end
 
 class Rook < Piece
+  def can_move(file, rank)
 
 end
 
