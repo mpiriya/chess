@@ -101,7 +101,7 @@ class Bishop < Piece
     curr_file = "ABCDEFGH".index(@file)
     next_file = "ABCDEFGH".index(file)
     ([curr_file, next_file].min).upto([curr_file, next_file].max) do |f|
-      ([@rank, rank].min).upto([@rank, rank]max) do |r|
+      ([@rank, rank].min).upto([@rank, rank].max) do |r|
         if @board.piece_at(f, r) == " "
           return false
         end
@@ -112,7 +112,7 @@ class Bishop < Piece
 end
 
 class Rook < Piece
-  def can_move(file, rank)
+  #def can_move(file, rank)
 
 end
 

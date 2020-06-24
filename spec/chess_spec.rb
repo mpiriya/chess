@@ -16,6 +16,12 @@ describe Pawn do
       b.move_piece("B", 2, "C", 3)
       expect(b.piece_at("C", 3).to_s).to eql("*")
     end
-  end
 
+    it "prevents the Pawn from moving backwards" do
+      b = Board.new
+      b.board[6][1] = Pawn.new(b, "white", "B", 2)
+      b.move_piece("B", 2, "B", 1)
+      expect(b.piece_at("B", 2).to_s).to eql("*")
+    end
+  end
 end
