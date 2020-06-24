@@ -41,6 +41,10 @@ class Piece
     @rank = rank
     @board.board[8 - rank]["ABCDEFGH".index(file)] = self
   end
+
+  def is_off_board?(file, rank)
+    return "ABCDEFGH".index(file) == -1 || rank < 1 || rank > 8
+  end
 end
 
 class Pawn < Piece
@@ -55,6 +59,7 @@ class Pawn < Piece
   def can_move(file, rank)
     #moving to same square
     return false if (file == @file && rank == @rank)
+    return false if is_off_board?(file, rank)
     
     curr_file_num = "ABCDEFGH".index(@file)
     desired_file_num = "ABCDEFGH".index(file)
@@ -86,11 +91,12 @@ end
 class Knight < Piece
   def can_move(file, rank)
     return false if (file == @file || rank == @rank)
+    return false if is_off_board?(file, rank)
     
     curr_file = "ABCDEFGH".index(@file)
     next_file = "ABCDEFGH".index(file)
     if (curr_file - next_file).abs + (@rank - rank).abs == 3
-      return @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == !@white
+      return @board.piece_at(file, rank) == " " || (@board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == !@white)
     end
   end
 
@@ -101,6 +107,8 @@ end
 
 class Bishop < Piece
   def can_move(file, rank)
+    return false if is_off_board?(file, rank)
+
     curr_file = "ABCDEFGH".index(@file)
     next_file = "ABCDEFGH".index(file)
     # false if it doesn't move
@@ -108,24 +116,31 @@ class Bishop < Piece
     # false if it doesn't move diagnoally
     return false if (curr_file - next_file).abs != (@rank - rank).abs
     # no friendly fire!
-    return false @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == @white
+    return false if @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == @white
 
     # checks whether there is any piece blocking the line of sight
     
-    horizontal_modifier = (curr_file > next_file ? 1 :  -1)
-    vertical_modifier = (@rank > rank ? 1 : -1)
+    horizontal_modifier = (curr_file > next_file ? -1 :  1)
+    vertical_modifier = (@rank > rank ? -1 : 1)
     
-    1.upto((@rank - rank).abs) do |i|
+    1.upto((@rank - rank).abs - 1) do |i|
+      puts "#{"ABCDEFGH"[curr_file + i * horizontal_modifier]}#{@rank + i * vertical_modifier}"
       if @board.piece_at("ABCDEFGH"[curr_file + i * horizontal_modifier], @rank + i * vertical_modifier) != " "
         return false
       end
     end
     return true
   end
+
+  def to_s
+    @white ? "B" : "B".light_blue
+  end
 end
 
 class Rook < Piece
   def can_move(file, rank)
+    return false if is_off_board?(file, rank)
+
     return false if (file == @file && rank == @rank)
     return false if ((file == @file && rank != @rank) || (file != @file && rank == @rank))
 
