@@ -169,7 +169,37 @@ class Rook < Piece
 end
 
 class Queen < Piece
+  def can_move(rank, file)
+    return false if rank == @rank && file == @file
+    curr_file = "ABCDEFGH".index(@file)
+    next_file = "ABCDEFGH".index(file)
 
+    if file == @file && rank != @rank
+      # moving vertically
+      ([@rank, rank].min + 1).upto([@rank, rank].max - 1) do |r|
+        return false if @board.piece_at(file, r) != " "
+      end
+    elsif rank == @rank && file != @file
+      # moving horizontally
+      ([curr_file, next_file].min + 1).upto([curr_file, next_file].max - 1) do |f|
+        return false if @board.piece_at("ABCDEFGH"[f], rank) != " "
+      end
+    elsif (curr_file - next_file).abs == (@rank - rank).abs
+      #moving diagonally
+      horizontal_modifier = (curr_file > next_file ? -1 :  1)
+      vertical_modifier = (@rank > rank ? -1 : 1)
+      1.upto((@rank - rank).abs - 1) do |i|
+        if @board.piece_at("ABCDEFGH"[curr_file + i * horizontal_modifier], @rank + i * vertical_modifier) != " "
+          return false
+        end
+      end
+    end
+    return false
+  end
+
+  def to_s
+    @white ? "Q" : "Q".light_blue
+  end
 end
 
 class King < Piece
