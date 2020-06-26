@@ -1,8 +1,11 @@
 class Board
   attr_accessor :board
   attr_reader :white, :black
+  attr_reader :white_in_check
   def initialize
     @board = Array.new(8) {Array.new(8, " ")}
+    @white_in_check = false
+    @black_in_check = false
     setup_pieces
   end
 
@@ -13,8 +16,15 @@ class Board
       if king_under_attack(isWhite)
         @board[8 - b_rank]["ABCDEFGH".index(b_file)].set_pos(a_file, a_rank)
         return false
+      else
+        if @white && @white_in_check
+          @white_in_check = false
+        elsif @black && @black_in_check
+          @black_in_check = false
+        end
       end
       if king_under_attack(!isWhite)
+        isWhite ? @white_in_check = true : @black_in_check = true
         puts "CHECK"
       end
       return true
@@ -308,3 +318,11 @@ class String
     colorize(36)
   end
 end
+
+b = Board.new
+b.move_piece(true, "D", 2, "D", 4)
+b.move_piece(false, "C", 7, "C", 6)
+b.move_piece(false, "D", 8, "A", 5)
+b.move_piece(true, "C", 1, "D", 2)
+b.move_piece(true, "D", 2, "C", 3)
+puts b
