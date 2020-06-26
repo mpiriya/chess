@@ -1,17 +1,64 @@
 class Board
   attr_accessor :board
+  attr_reader :white, :black
   def initialize
     @board = Array.new(8) {Array.new(8, " ")}
+    setup_pieces
   end
 
   # move from a_file, a_rank to b_file, b_rank
-  def move_piece(a_file, a_rank, b_file, b_rank)
-    if piece_at(a_file, a_rank) != " " && piece_at(a_file, a_rank).can_move(b_file, b_rank)
+  def move_piece(isWhite, a_file, a_rank, b_file, b_rank)
+    if piece_at(a_file, a_rank) != " " && piece_at(a_file, a_rank).white == isWhite && piece_at(a_file, a_rank).can_move(b_file, b_rank)
       @board[8 - a_rank]["ABCDEFGH".index(a_file)].set_pos(b_file, b_rank)
+      if king_under_attack(isWhite)
+        @board[8 - b_rank]["ABCDEFGH".index(b_file)].set_pos(a_file, a_rank)
+        return false
+      end
+      if king_under_attack(!isWhite)
+        puts "CHECK"
+      end
       return true
     else
       return false
     end
+  end
+
+  def setup_pieces
+    @white = Array.new
+    8.times {|i| @white << Pawn.new(self, "white", "ABCDEFGH"[i-1], 2)}
+    @white << Rook.new(self, "white", "A", 1)
+    @white << Knight.new(self, "white", "B", 1)
+    @white << Bishop.new(self, "white", "C", 1)
+    @white << Queen.new(self, "white", "D", 1)
+    @white_king = King.new(self, "white", "E", 1)
+    @white << @white_king
+    @white << Bishop.new(self, "white", "F", 1)
+    @white << Knight.new(self, "white", "G", 1)
+    @white << Rook.new(self, "white", "H", 1)
+
+    @black = Array.new
+    8.times {|i| @black << Pawn.new(self, "black", "ABCDEFGH"[i-1], 7)}
+    @black << Rook.new(self, "black", "A", 8)
+    @black << Knight.new(self, "black", "B", 8)
+    @black << Bishop.new(self, "black", "C", 8)
+    @black << Queen.new(self, "black", "D", 8)
+    @black_king = King.new(self, "black", "E", 8)
+    @black << @black_king
+    @black << Bishop.new(self, "black", "F", 8)
+    @black << Knight.new(self, "black", "G", 8)
+    @black << Rook.new(self, "black", "H", 8)
+    
+    @white.each {|elem| @board[8-elem.rank]["ABCDEFGH".index(elem.file)] = elem}
+    @black.each {|elem| @board[8-elem.rank]["ABCDEFGH".index(elem.file)] = elem}
+  end
+
+  def king_under_attack(isWhite)
+    if isWhite
+      @black.each {|elem| return true if elem != @black_king && elem.can_move(@white_king.file, @white_king.rank)}
+    else
+      @white.each {|elem| return true if elem != @white_king && elem.can_move(@black_king.file, @black_king.rank)}
+    end
+    return false
   end
 
   def piece_at(file, rank)
@@ -26,7 +73,8 @@ class Board
 end
 
 class Piece
-  attr_writer :file, :rank
+  attr_reader :white
+  attr_accessor :file, :rank
 
   def initialize(board, color, file, rank)
     @board = board
@@ -169,22 +217,13 @@ class Rook < Piece
 end
 
 class Queen < Piece
-  def can_move(rank, file)
+  def can_move(file, rank)
     return false if rank == @rank && file == @file
+    return false if @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == @white
     curr_file = "ABCDEFGH".index(@file)
     next_file = "ABCDEFGH".index(file)
-
-    if file == @file && rank != @rank
-      # moving vertically
-      ([@rank, rank].min + 1).upto([@rank, rank].max - 1) do |r|
-        return false if @board.piece_at(file, r) != " "
-      end
-    elsif rank == @rank && file != @file
-      # moving horizontally
-      ([curr_file, next_file].min + 1).upto([curr_file, next_file].max - 1) do |f|
-        return false if @board.piece_at("ABCDEFGH"[f], rank) != " "
-      end
-    elsif (curr_file - next_file).abs == (@rank - rank).abs
+    
+    if (curr_file - next_file).abs == (@rank - rank).abs
       #moving diagonally
       horizontal_modifier = (curr_file > next_file ? -1 :  1)
       vertical_modifier = (@rank > rank ? -1 : 1)
@@ -193,6 +232,19 @@ class Queen < Piece
           return false
         end
       end
+      return true
+    elsif file == @file && rank != @rank
+      # moving vertically
+      ([@rank, rank].min + 1).upto([@rank, rank].max - 1) do |r|
+        return false if @board.piece_at(file, r) != " "
+      end
+      return true
+    elsif rank == @rank && file != @file
+      # moving horizontally
+      ([curr_file, next_file].min + 1).upto([curr_file, next_file].max - 1) do |f|
+        return false if @board.piece_at("ABCDEFGH"[f], rank) != " "
+      end
+      return true
     end
     return false
   end
@@ -203,7 +255,27 @@ class Queen < Piece
 end
 
 class King < Piece
-  
+  def in_check(file, rank)
+    if @white
+      @board.black.each {|piece| return true if piece.can_move(file, rank)}
+    else
+      @board.white.each {|piece| return true if piece.can_move(file, rank)}
+    end
+    return false
+  end
+
+  def can_move(file, rank)
+    return false if file == @file && rank == @rank
+    return false if @board.piece_at(file, rank) != " " && @board.piece_at(file, rank).white == @white
+    return false if in_check(file, rank)
+    curr_file = "ABCDEFGH".index(@file)
+    next_file = "ABCDEFGH".index(file)
+    return (curr_file - next_file).abs <= 1 && (@rank - rank).abs <= 1
+  end
+
+  def to_s
+    @white ? "K" : "K".light_blue
+  end
 end
 
 class String
