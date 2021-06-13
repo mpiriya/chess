@@ -229,10 +229,6 @@ class Piece
     return row < 0 || row > 7 || col < 0 || col > 7
   end
 
-  def path_empty?(nrow, ncol)
-    return false
-  end
-
   # DOES NOT CHECK WHETHER THE MOVE RESULTS IN CHECK, AND IS THUS INVALID (pin)
   # returns list of PossibleMove's which contain the piece and the cell to move to
   def possible_moves
@@ -263,54 +259,6 @@ class Pawn < Piece
     @has_moved = false
   end
   
-  # params indicate desired square to move to
-  def can_move(row, col)
-    #moving to same square
-    return false if (row == @row && col == @col)
-    return false if Piece.is_off_board?(row, col)
-
-    row_dist = @isWhite ? @row - row : row - @row
-    #moving forward
-    if col == @col
-      # if there is a piece occupying that square
-      return false if @board.piece_at(row, col) != nil
-      # 2 sqares first time
-      if row_dist == 2 && !@has_moved
-        if @isWhite
-          return false if @board.piece_at(row, col - 1) != nil || @board.piece_at(row, col - 2) != nil
-        else
-          return false if @board.piece_at(row, col + 1) != nil || @board.piece_at(row, col + 2) != nil
-        end
-      # only allow 1 square any other time
-      elsif row_dist
-        return true
-      end
-    # diagonal take
-    elsif (col - @col).abs() == 1 && row_dist == 1
-      #can take if piece exists at spot and if they are of opposite color
-      return true if @board.piece_at(file, rank) != nil && @board.piece_at(file, rank).isWhite == !@isWhite
-      #set_pos(file, rank) **take piece**
-    else
-      return false
-    end
-  end
-
-  def path_empty?(nrow, ncol)
-    #moving straight
-    if @row == nrow
-      if @isWhite
-        for i in nrow..@row
-          return false if @board.piece_at(i, col) != nil
-        end
-      else
-        for i in @row..nrow
-          return false if @board.piece_at(i, col) != nil
-        end
-      end
-    end
-    return true
-  end
-
   def possible_moves
     to_ret = []
     dir = @isWhite ? -1 : 1
@@ -339,15 +287,6 @@ class Pawn < Piece
 end
 
 class Knight < Piece
-  def can_move(row, col)
-    return false if (row == @row && col == @col)
-    return false if is_off_board?(row, col)
-    
-    if (@row - row).abs + (@col - col).abs == 3
-      return @board.piece_at(row, col) == nil || (@board.piece_at(row, col) != nil && @board.piece_at(row, col).isWhite == !@isWhite)
-    end
-  end
-
   def possible_moves
     # for knights, this will just be 
     to_ret = []
@@ -386,35 +325,6 @@ class Knight < Piece
 end
 
 class Bishop < Piece
-  def can_move(row, col)
-    return false if is_off_board?(row, col)
-
-    # curr_file = "ABCDEFGH".index(@file)
-    # next_file = "ABCDEFGH".index(file)
-    # false if it doesn't move
-    return false if row == @row && col == @col
-    # false if it doesn't move diagnoally
-    return false if (@row - row).abs != (@col - col).abs
-    # no friendly fire!
-    return false if @board.piece_at(row, col) != nil && @board.piece_at(row, col).isWhite == @isWhite
-
-    # checks whether there is any piece blocking the line of sight
-    
-    return path_empty?(row, col)
-  end
-
-  def path_empty?(nrow, ncol)
-    horizontal_modifier = @row > nrow ? -1 : 1
-    vertical_modifier = @col > ncol ? -1 : 1
-
-    1.upto((@col - ncol).abs - 1) do |i|
-      curr = @board.piece_at(@row + i * horizontal_modifier, @col + i * vertical_modifier)
-      return false if curr != nil
-    end
-
-    return true
-  end
-
   def possible_moves
     to_ret = []
 
@@ -436,35 +346,6 @@ class Bishop < Piece
 end
 
 class Rook < Piece
-  def can_move(row, col)
-    return false if is_off_board?(row, col)
-
-    return false if (row == @row && col == @col)
-    return false if (row != @row && col != @col)
-    return false if @board.piece_at(row, col) != nil && @board.piece_at(row, col).isWhite == @isWhite
-    # the two statements above confirm that it moves straight either horizontally or vertically
-    # now, just need to check whether piece blocking line of sight
-    # if moving vertically
-
-    return path_empty?(row, col)
-  end
-
-  def path_empty?(nrow, ncol)
-    if ncol == @col
-      ([@row, nrow].min + 1).upto([@row, nrow].max - 1) do |r|
-        curr = @board.piece_at(r, ncol)
-        return false if curr != nil
-      end
-    else
-      ([@col, ncol].min + 1).upto([@col, ncol].max - 1) do |c|
-        curr = @board.piece_at(nrow, c)
-        return false if curr != nil
-      end
-    end
-
-    return true
-  end
-
   def possible_moves
     to_ret = []
 
@@ -486,42 +367,6 @@ class Rook < Piece
 end
 
 class Queen < Piece
-  def can_move(row, col)
-    return false if is_off_board?(row, col)
-    return false if (row != @row && col != @col) && (@row - row).abs != (@col - col).abs
-    return false if row == @row && col == @col
-    return false if @board.piece_at(row, col) != nil && @board.piece_at(row, col).isWhite == @isWhite
-    
-    return path_empty?(row, col)
-  end
-
-  def path_empty?(nrow, ncol)
-    if (@row - nrow).abs == (@col - ncol).abs
-      # moving diagonally
-      horizontal_modifier = @row > nrow ? -1 : 1
-      vertical_modifier = @col > ncol ? -1 : 1
-
-      1.upto((@col - ncol).abs - 1) do |i|
-        curr = @board.piece_at(@row + i * horizontal_modifier, @col + i * vertical_modifier)
-        return false if curr != nil
-      end
-    elsif ncol == @col && nrow != @row
-      # moving vertically
-      ([@row, nrow].min + 1).upto([@row, nrow].max - 1) do |r|
-        curr = @board.piece_at(r, ncol)
-        return false if curr != nil
-      end
-    elsif nrow == @row && ncol != @col
-      # moving horizontally
-      ([@col, ncol].min + 1).upto([@col, ncol].max - 1) do |c|
-        curr = @board.piece_at(nrow, c)
-        return false if curr != nil
-      end
-    end
-
-    return true
-  end
-
   def possible_moves
     to_ret = []
 
@@ -551,13 +396,6 @@ class Queen < Piece
 end
 
 class King < Piece
-  def can_move(row, col)
-    return false if row == @row && col == @col
-    return false if @board.piece_at(row, col) != nil && @board.piece_at(row, col).isWhite == @isWhite
-
-    return (row - @row).abs <= 1 && (col - @col).abs <= 1
-  end
-
   def possible_moves
     to_ret = []
 
