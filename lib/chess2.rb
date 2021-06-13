@@ -1,4 +1,5 @@
 class Player
+  attr_accessor :otherPlayer
   attr_reader :board, :isWhite, :pieces, :king, :in_check
   
   # takes in Board and Color module (Color::BLACK or Color::WHITE)
@@ -27,27 +28,54 @@ class Player
     end
   end
 
-  def make_move(piece, row, col) {
-    
-  }
-end
+  def all_legal_moves
+    to_ret = []
 
-class PossibleMove
-  attr_reader :piece, :to_cell
-  def initialize(piece, to_cell)
-    @piece = piece
-    @to_file = to_cell
+    #gets EVERY POSSIBLE move, even the ones that would put the player in check
+    @pieces.each { |piece| to_ret.concat(piece.possible_moves) }
+    to_ret.concat(@king.possible_moves)
+    
+    # test each move, and if it results in the player in check, remove it from the list
+    to_remove = []
+    @to_ret.each do |possible_move|
+      # save the piece's row and col
+      prev_row = possible_move.from_cell.row
+      prev_col = possible_move.from_cell.col
+      curr_piece = possible_moves.from_cell.piece
+
+      # move the piece at from_cell to the new square
+      curr_piece.move(possible_move.to_cell.row, possible_move.to_cell.col)
+
+      #is the player in check?
+      if in_check?
+        # undo the move
+        curr_piece.move(prev_row, prev_col)
+        # add it to the list of moves to be removed from to_ret
+        to_remove << possible_move
+      end
+    end
+
+    #for each element in to_ret, delete if the element exists in the to_remove array
+    to_ret.delete_if {|elem| to_remove.index(elem) != nil}
+
+    return to_ret
+  end
+
+  def in_check?
+    @otherPlayer.pieces.each do |piece|
+      piece.possible_moves.each do |possible_move|
+        return true if possible_move.to_cell.piece == @king
+      end
+    end
+    return false
   end
 end
 
 class Board 
   attr_accessor :board
-  attr_reader :white_player, :black_player, :current_player
 
   def initialize
     @board = Array.new(8) {|r| Array.new(8) {|c| Cell.new(nil, r, c)}}
-    @white_player = Player.new(this, "white")
-    @black_player = Player.new(this, "black")
   end
 
   def cell_at(row, col)
@@ -75,6 +103,14 @@ class Cell
   end
 end
 
+class PossibleMove
+  attr_reader :from_cell, :to_cell
+  def initialize(from_cell, to_cell)
+    @from_cell = from_cell
+    @to_file = to_cell
+  end
+end
+
 class Piece
   attr_reader :isWhite
   attr_accessor :row, :col, :available_squares
@@ -86,21 +122,23 @@ class Piece
     @col = col
   end
 
-  def set_pos(row, col)
-    @board.set_piece(row, col, nil)
+  def move(row, col)
+    @board.set_piece(@row, @col, nil)
     @row = row
     @col = col
-    @board.set_piece(row, col, self)
+    @board.set_piece(@row, @col, self)
   end
 
   def self.is_off_board?(row, col)
     return row < 0 || row > 7 || col < 0 || col > 7
   end
 
-  def in_path(nrow, ncol)
+  def path_empty?(nrow, ncol)
     return false
   end
 
+  # DOES NOT CHECK WHETHER THE MOVE RESULTS IN CHECK, AND IS THUS INVALID (pin)
+  # returns list of PossibleMove's which contain the piece and the cell to move to
   def possible_moves
     return []
   end
@@ -112,12 +150,12 @@ class Piece
     i = 1
     curr = @board.piece_at(@row + delta_row * i, @col + delta_col * i)
     while curr == nil do
-      to_ret << curr
+      to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr)
       i += 1
       curr = @board.piece_at(@row + delta_row * i, @col + delta_col * i)
     end
     if curr.isWhite != @isWhite
-      to_ret << curr
+      to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr)
     end
     return to_ret
   end
@@ -161,25 +199,20 @@ class Pawn < Piece
     end
   end
 
-  def in_path(nrow, ncol)
-    to_ret = []
+  def path_empty?(nrow, ncol)
     #moving straight
     if @row == nrow
       if @isWhite
         for i in nrow..@row
-          if @board.piece_at(i, col) != nil
-            to_ret << @board.piece_at(i, col)
-          end
+          return false if @board.piece_at(i, col) != nil
         end
       else
         for i in @row..nrow
-          if @board.piece_at(i, col) != nil
-            to_ret << @board.piece_at(i, col)
-          end
+          return false if @board.piece_at(i, col) != nil
         end
       end
     end
-    return to_ret
+    return true
   end
 
   def possible_moves
@@ -187,19 +220,19 @@ class Pawn < Piece
     dir = @isWhite ? -1 : 1
     #the one right in front of it
     curr = @board.piece_at(row + dir, col)
-    to_ret << curr if curr != nil
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr != nil
 
     if !@has_moved
       # the spot 2 in front of it if it hasn't moved yet
       curr = @board.piece_at(row + 2*dir, col)
-      to_ret << curr if curr != nil
+      to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr != nil
     end
     # front-left
     curr = @board.piece_at(row + dir, col - 1)
-    to_ret << curr if curr.isWhite == @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr.isWhite == @isWhite
     # front-right
     curr = @board.piece_at(row + dir, col + 1)
-    to_ret << curr if curr.isWhite == @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr.isWhite == @isWhite
 
     return to_ret
   end
@@ -225,28 +258,28 @@ class Knight < Piece
 
     # up-left
     curr = @board.piece_at(@row - 2, @col - 1)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
     # up-right
     curr = @board.piece_at(@row - 2, @col + 1)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
     # down-left
     curr = @board.piece_at(@row + 2, @col - 1)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
     # down-right
     curr = @board.piece_at(@row + 2, @col + 1)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
     # left-up
     curr = @board.piece_at(@row - 1, @col - 2)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
     # left-down
     curr = @board.piece_at(@row + 1, @col - 2)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
     # right-up
     curr = @board.piece_at(@row - 1, @col + 2)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
     # right-down
     curr = @board.piece_at(@row + 1, @col + 2)
-    to_ret << curr if curr == nil || curr.isWhite != @isWhite
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
 
     return to_ret
   end
@@ -271,22 +304,19 @@ class Bishop < Piece
 
     # checks whether there is any piece blocking the line of sight
     
-    return in_path(row, col).empty?
+    return path_empty?(row, col)
   end
 
-  def in_path(nrow, ncol)
-    to_ret = []
+  def path_empty?(nrow, ncol)
     horizontal_modifier = @row > nrow ? -1 : 1
     vertical_modifier = @col > ncol ? -1 : 1
 
     1.upto((@col - ncol).abs - 1) do |i|
       curr = @board.piece_at(@row + i * horizontal_modifier, @col + i * vertical_modifier)
-      if curr != nil
-        to_ret << curr
-      end
+      return false if curr != nil
     end
 
-    return to_ret
+    return true
   end
 
   def possible_moves
@@ -320,25 +350,23 @@ class Rook < Piece
     # now, just need to check whether piece blocking line of sight
     # if moving vertically
 
-    return in_path(row, col).empty?
+    return path_empty?(row, col)
   end
 
-  def in_path(nrow, ncol)
-    to_ret = []
-
+  def path_empty?(nrow, ncol)
     if ncol == @col
       ([@row, nrow].min + 1).upto([@row, nrow].max - 1) do |r|
         curr = @board.piece_at(r, ncol)
-        to_ret << curr if curr != nil
+        return false if curr != nil
       end
     else
       ([@col, ncol].min + 1).upto([@col, ncol].max - 1) do |c|
         curr = @board.piece_at(nrow, c)
-        to_ret << curr if curr != nil
+        return false if curr != nil
       end
     end
 
-    return to_ret
+    return true
   end
 
   def possible_moves
@@ -368,12 +396,10 @@ class Queen < Piece
     return false if row == @row && col == @col
     return false if @board.piece_at(row, col) != nil && @board.piece_at(row, col).isWhite == @isWhite
     
-    return in_path(row, col).empty?
+    return path_empty?(row, col)
   end
 
-  def in_path(nrow, ncol)
-    to_ret = []
-
+  def path_empty?(nrow, ncol)
     if (@row - nrow).abs == (@col - ncol).abs
       # moving diagonally
       horizontal_modifier = @row > nrow ? -1 : 1
@@ -381,25 +407,23 @@ class Queen < Piece
 
       1.upto((@col - ncol).abs - 1) do |i|
         curr = @board.piece_at(@row + i * horizontal_modifier, @col + i * vertical_modifier)
-        if curr != nil
-          to_ret << curr
-        end
+        return false if curr != nil
       end
     elsif ncol == @col && nrow != @row
       # moving vertically
       ([@row, nrow].min + 1).upto([@row, nrow].max - 1) do |r|
         curr = @board.piece_at(r, ncol)
-        to_ret << curr if curr != nil
+        return false if curr != nil
       end
     elsif nrow == @row && ncol != @col
       # moving horizontally
       ([@col, ncol].min + 1).upto([@col, ncol].max - 1) do |c|
         curr = @board.piece_at(nrow, c)
-        to_ret << curr if curr != nil
+        return false if curr != nil
       end
     end
 
-    return to_ret
+    return true
   end
 
   def possible_moves
@@ -431,21 +455,26 @@ class Queen < Piece
 end
 
 class King < Piece
-  def in_check(row, col)
-    if @isWhite
-      @board.black.each {|piece| return true if piece.can_move(row, col)}
-    else
-      @board.white.each {|piece| return true if piece.can_move(row, col)}
-    end
-    return false
-  end
-
   def can_move(row, col)
     return false if row == @row && col == @col
     return false if @board.piece_at(row, col) != nil && @board.piece_at(row, col).isWhite == @isWhite
-    return false if in_check(file, rank)
 
     return (row - @row).abs <= 1 && (col - @col).abs <= 1
+  end
+
+  def possible_moves
+    to_ret = []
+
+    for i in -1..1 
+      for j in -1..1
+        if i != 0 || j != 0
+          curr = @board.piece_at(@row + i, @col + j)
+          to_ret << curr if curr.isWhite != @isWhite
+        end
+      end
+    end
+      
+    return to_ret
   end
 
   def to_s
