@@ -6,10 +6,8 @@ The classic game of chess written on the command line using Ruby
 - Pieces have `possible_moves` method which calculate all possible moves
 - Board interface (from `chess.rb` which is the first iteration of the project)
 
-## In Progress
-- In `possible_moves`, I have to figure out how to store the piece to be moved, and the destination, and whether it's a take (maybe using the `PossibleMove` class)
 
-## To-Do
+## In Progress
 - `GameController` class which has a `Board`, 2 `Player`s, and a driver method that continues the game until one of the `Player`s are in checkmate
   - `play_game` gets 
     - current player
@@ -23,3 +21,8 @@ The classic game of chess written on the command line using Ruby
     - Don't forget to undo the move
     - Otherwise, pass the full set of possible moves to `GameController`, and make sure the current player makes one of the moves in the list
 - Create a `chess2_spec.rb` so that it supports the new structure created
+
+## To-Do
+- Stalemate
+- Support castling
+- Performance optimization if I want to try to use it for computer eval or something
