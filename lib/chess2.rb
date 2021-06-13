@@ -73,6 +73,9 @@ class GameConroller
 
           # move the piece
           possible_move.from_cell.piece.move(to_row, to_col)
+          if possible_move.from_cell.piece.instance_of?(Pawn)
+            possible_move.from_cell.piece.has_moved = true
+          end
 
           #check if it puts the other player in checkmate
           if @current.other_player.in_check? && @current.other_player.all_legal_moves.empty?
@@ -254,6 +257,7 @@ class Piece
 end
 
 class Pawn < Piece
+  attr_accessor :has_moved
   def initialize(board, color, row, col)
     super(board, color, row, col)
     @has_moved = false
