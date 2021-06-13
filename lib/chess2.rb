@@ -1,9 +1,104 @@
+class GameConroller
+  def initialize
+    @board = Board.new
+    @white = Player.new(@board, "white")
+    @black = Player.new(@board, "black")
+    @white.other_player = @black
+    @black.other_player = @white
+    @current = @white
+  end
+
+  def play_game
+    puts "Welcome to Chess!\nTake turns with a friend entering moves using the format [rank][file] [rank][file]"
+    puts "\twhere the first coordinate is that of the piece you wish to move"
+    puts "\tand the second is the destination you wish to move that piece to"
+    puts "Rank: A-H, where A is white's first row, and H is black's first row"
+    puts "File: 1-8, where 1 is the bottom-left corner from white's perspective,\n\tand 8 is the bottom-left corner from black's perspective"
+
+    while !@current.in_checkmate
+      puts "Please enter your move (" + (@isWhite ? "white" : "black") + " to move): \n"
+      input = gets.chomp
+
+      processed_input = process_input(input)
+
+      if processed_input == nil
+        puts "Please use format [rank][file] [rank][file]"
+        next
+      end
+
+      turn_valid = process_turn(processed_input[0], processed_input[1], processed_input[2], processed_input[3])
+      if turn_valid
+        @current = @current.otherPlayer
+      end
+    end
+  end
+
+  def process_input(input)
+    # rank is the col, and file is the row, so be careful
+    arr = input.split
+    if arr.length != 2
+      return nil
+    end
+    from = arr[0].upcase
+    to = arr[1].upcase
+
+    from_rf = from.split("")
+    to_rf = to.split("")
+
+    # are the letters valid and the first part of each coordinate
+    if "ABCDEFGH".index(from_rf[0]) == nil || "ABCDEFGH".index(to_rf[0])
+      return nil
+    end
+    
+    from_file = from_rf[1].to_i
+    to_file = to_rf[1].to_i
+
+    if from_file < 1 || from_file > 8 || to_file < 1 || to_file > 8
+      return nil
+    end
+
+    return 8 - from_file, "ABCDEFGH".index(from_rf[0]), 8 - to_file, "ABCDEFGH".index(to_rf[0])
+  end
+
+  # input
+  def process_turn(from_row, from_col, to_row, to_col)
+    legal_moves = @current.all_legal_moves
+    # check if current player has a piece at from_row, from_col
+    from_piece = @board.piece_at(from_row, from_col)
+    if from_piece != nil && from_piece.isWhite == @current.isWhite
+      # then checks if one of the legal moves match the desired move
+      legal_moves.each do |possible_move|
+        if possible_move.from_cell.row == from_row && possible_move.from_cell.col == from_col 
+          && possible_move.to_cell.row == to_row && possible_move.to_cell.col == to_col
+
+          # move the piece
+          possible_move.from_cell.piece.move(to_row, to_col)
+
+          #check if it puts the other player in checkmate
+          if @current.other_player.in_check? && @current.other_player.all_legal_moves.empty?
+            @current.other_player.in_checkmate = true
+          end
+          return true
+        else
+          # if the move is invalid?
+          puts "Error: piece at #{"ABCDEFGH"[from_col]}#{8 - from_row} cannot move to #{"ABCDEFGH"[from_col]}#{8 - from_row}"
+          return false
+        end
+      end
+    else
+      puts "Error: you do not have a piece at #{"ABCDEFGH"[from_col]}#{8 - from_row}"
+      return false
+    end
+  end
+end
+
 class Player
-  attr_accessor :otherPlayer
-  attr_reader :board, :isWhite, :pieces, :king, :in_check
+  attr_accessor :other_player, :in_checkmate
+  attr_reader :board, :isWhite, :pieces, :king
   
   # takes in Board and Color module (Color::BLACK or Color::WHITE)
   def initialize(board, color)
+    @board = board
     @isWhite = color == "white"
     if(@isWhite)
       8.times {|i| @pawns << Pawn.new(board, "white", 6, i)}
@@ -26,6 +121,7 @@ class Player
       @pieces << Queen.new(board, "black", 0, 3)
       @king = King.new(board, "black", 0, 4)
     end
+    @in_checkmate = false
   end
 
   def all_legal_moves
