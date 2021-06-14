@@ -315,30 +315,18 @@ class Knight < Piece
     to_ret = []
 
     # up-left
-    curr = @board.piece_at(@row - 2, @col - 1)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-    # up-right
-    curr = @board.piece_at(@row - 2, @col + 1)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-    # down-left
-    curr = @board.piece_at(@row + 2, @col - 1)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-    # down-right
-    curr = @board.piece_at(@row + 2, @col + 1)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-    # left-up
-    curr = @board.piece_at(@row - 1, @col - 2)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-    # left-down
-    curr = @board.piece_at(@row + 1, @col - 2)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-    # right-up
-    curr = @board.piece_at(@row - 1, @col + 2)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-    # right-down
-    curr = @board.piece_at(@row + 1, @col + 2)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr == nil || curr.isWhite != @isWhite
-
+    for i in -2..2
+      for j in -2..2
+        if i.abs + j.abs == 3
+          curr = @board.cell_at(@row + i, @col + j)
+          # first must be on the board, then must be either empty space or enemy
+          if curr != nil && (curr.piece == nil || curr.piece.isWhite != @isWhite)
+            to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr)
+          end
+        end
+      end
+    end
+    
     return to_ret
   end
 
