@@ -260,12 +260,13 @@ class Piece
     to_ret = []
     i = 1
     curr = @board.cell_at(@row + delta_row * i, @col + delta_col * i)
-    while curr.piece == nil do
+    # have to make sure we stay on the board lol
+    while curr != nil && curr.piece == nil do
       to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr)
       i += 1
       curr = @board.cell_at(@row + delta_row * i, @col + delta_col * i)
     end
-    if curr.piece.isWhite != @isWhite
+    if curr != nil && curr.piece.isWhite != @isWhite
       to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr)
     end
     return to_ret
