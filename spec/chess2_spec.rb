@@ -132,37 +132,73 @@ describe Knight do
   end
 end
 
-# describe Bishop do
-#   describe "#possible_moves" do
-#     it "doesn't allow moving to current square" do
-      
-#     end
+describe Bishop do
+  describe "#possible_moves" do
+    it "doesn't allow moving to current square" do
+      b = Board.new
+      bish = Bishop.new(b, "white", 7, 5)
+      b.set_piece(bish.row, bish.col, bish)
+      poss = bish.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 5}).to eql(false)
+    end
 
-#     it "moves diagonally" do
-      
-#     end
+    it "moves diagonally" do
+      b = Board.new
+      bish = Bishop.new(b, "white", 7, 5)
+      b.set_piece(bish.row, bish.col, bish)
+      poss = bish.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 2 && m.to_cell.col == 0}).to eql(true)
+    end
 
-#     it "prevents non diagonal moves" do
-      
-#     end
+    it "prevents non diagonal moves" do
+      b = Board.new
+      bish = Bishop.new(b, "white", 7, 5)
+      b.set_piece(bish.row, bish.col, bish)
+      poss = bish.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 6}).to eql(false)
+    end
 
-#     it "doesn't move through enemies" do
-      
-#     end
+    it "doesn't move through enemies" do
+      b = Board.new
+      bish = Bishop.new(b, "white", 7, 5)
+      pawn = Pawn.new(b, "black", 6, 4)
+      b.set_piece(bish.row, bish.col, bish)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = bish.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 3}).to eql(false)
+    end
 
-#     it "doesn't capture allies" do
-      
-#     end
+    it "doesn't capture allies" do
+      b = Board.new
+      bish = Bishop.new(b, "white", 7, 5)
+      pawn = Pawn.new(b, "white", 6, 4)
+      b.set_piece(bish.row, bish.col, bish)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = bish.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 6 && m.to_cell.col == 4}).to eql(false)
+    end
 
-#     it "doesn't move through allies" do
-      
-#     end
+    it "doesn't move through allies" do
+      b = Board.new
+      bish = Bishop.new(b, "white", 7, 5)
+      pawn = Pawn.new(b, "white", 6, 4)
+      b.set_piece(bish.row, bish.col, bish)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = bish.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 3}).to eql(false)
+    end
 
-#     it "can capture enemies" do
-      
-#     end
-#   end
-# end
+    it "can capture enemies" do
+      b = Board.new
+      bish = Bishop.new(b, "white", 7, 5)
+      pawn = Pawn.new(b, "black", 6, 4)
+      b.set_piece(bish.row, bish.col, bish)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = bish.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 6 && m.to_cell.col == 4}).to eql(true)
+    end
+  end
+end
 
 # describe Rook do
 #   describe "#possible_moves" do
