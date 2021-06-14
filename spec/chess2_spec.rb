@@ -200,70 +200,102 @@ describe Bishop do
   end
 end
 
-# describe Rook do
-#   describe "#possible_moves" do
-#     it "prevents moving nowhere" do
-      
-#     end
+describe Rook do
+  describe "#possible_moves" do
+    it "prevents moving nowhere" do
+      b = Board.new
+      r = Rook.new(b, "white", 7, 0)
+      b.set_piece(r.row, r.col, r)
+      poss = r.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 0}).to eql(false)
+    end
 
-#     it "prevents moving rank AND file" do
-      
-#     end
+    it "prevents moving rank AND file" do
+      b = Board.new
+      r = Rook.new(b, "white", 7, 0)
+      b.set_piece(r.row, r.col, r)
+      poss = r.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 6 && m.to_cell.col == 1}).to eql(false)
+    end
     
-#     it "doesn't move through allies" do
+    it "doesn't move through allies" do
+      b = Board.new
+      r = Rook.new(b, "white", 7, 0)
+      n = Knight.new(b, "white", 7, 1)
+      b.set_piece(r.row, r.col, r)
+      b.set_piece(n.row, n.col, n)
+      poss = r.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 2}).to eql(false)
+    end
+
+    it "doesn't move through enemies" do
+      b = Board.new
+      r = Rook.new(b, "white", 7, 0)
+      n = Knight.new(b, "black", 5, 0)
+      b.set_piece(r.row, r.col, r)
+      b.set_piece(n.row, n.col, n)
+      poss = r.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 4 && m.to_cell.col == 0}).to eql(false)
+    end
+
+    it "doesn't take allies" do
+      b = Board.new
+      r = Rook.new(b, "white", 7, 0)
+      n = Knight.new(b, "white", 7, 1)
+      b.set_piece(r.row, r.col, r)
+      b.set_piece(n.row, n.col, n)
+      poss = r.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 1}).to eql(false)
+    end
+
+    it "takes enemies" do
+      b = Board.new
+      r = Rook.new(b, "white", 7, 0)
+      n = Knight.new(b, "black", 5, 0)
+      b.set_piece(r.row, r.col, r)
+      b.set_piece(n.row, n.col, n)
+      poss = r.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 0}).to eql(true)
+    end
+  end
+end
+
+describe Queen do
+  describe "#possible_moves" do
+    it "doesn't allow moving to current square" do
       
-#     end
+    end
 
-#     it "doesn't move through enemies" do
+    it "moves diagonally" do
       
-#     end
+    end
 
-#     it "doesn't take allies" do
+    it "moves vertically" do
+
+    end
+
+    it "moves horizontally" do
       
-#     end
+    end
 
-#     it "takes enemies" do
+    it "prevents illegal moves" do
       
-#     end
-#   end
-# end
+    end
 
-# describe Queen do
-#   describe "#possible_moves" do
-#     it "doesn't allow moving to current square" do
+    it "doesn't move through enemies" do
       
-#     end
+    end
 
-#     it "moves diagonally" do
+    it "doesn't capture allies" do
       
-#     end
+    end
 
-#     it "moves vertically" do
-
-#     end
-
-#     it "moves horizontally" do
+    it "doesn't move through allies" do
       
-#     end
+    end
 
-#     it "prevents illegal moves" do
+    it "can capture enemies" do
       
-#     end
-
-#     it "doesn't move through enemies" do
-      
-#     end
-
-#     it "doesn't capture allies" do
-      
-#     end
-
-#     it "doesn't move through allies" do
-      
-#     end
-
-#     it "can capture enemies" do
-      
-#     end
-#   end
-# end
+    end
+  end
+end
