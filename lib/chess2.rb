@@ -259,13 +259,13 @@ class Piece
   def line_of_sight(delta_row, delta_col)
     to_ret = []
     i = 1
-    curr = @board.piece_at(@row + delta_row * i, @col + delta_col * i)
-    while curr == nil do
+    curr = @board.cell_at(@row + delta_row * i, @col + delta_col * i)
+    while curr.piece == nil do
       to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr)
       i += 1
-      curr = @board.piece_at(@row + delta_row * i, @col + delta_col * i)
+      curr = @board.cell_at(@row + delta_row * i, @col + delta_col * i)
     end
-    if curr.isWhite != @isWhite
+    if curr.piece.isWhite != @isWhite
       to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr)
     end
     return to_ret
@@ -326,7 +326,7 @@ class Knight < Piece
         end
       end
     end
-    
+
     return to_ret
   end
 
