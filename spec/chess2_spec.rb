@@ -76,29 +76,61 @@ describe Pawn do
   end
 end
 
-# describe Knight do
-#   describe "#possible_moves" do
-#     it "doesn't allow moving to the current square" do
+describe Knight do
+  describe "#possible_moves" do
+    it "doesn't allow moving to the current square" do
+      b = Board.new
+      n = Knight.new(b, "white", 7, 6)
+      b.set_piece(n.row, n.col, n)
+      poss = n.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 6}).to eql(false)
+    end
 
-#     end
+    it "allows moving 2 vertically and 1 horizontally" do
+      b = Board.new
+      n = Knight.new(b, "white", 7, 6)
+      b.set_piece(n.row, n.col, n)
+      poss = n.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 5}).to eql(true)
+    end
 
-#     it "allows moving 2 vertically and 1 horizontally" do
-      
-#     end
+    it "allows moving 1 vertically and 2 horizontally" do
+      b = Board.new
+      n = Knight.new(b, "white", 7, 6)
+      b.set_piece(n.row, n.col, n)
+      poss = n.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 6 && m.to_cell.col == 4}).to eql(true)
+    end
 
-#     it "allows moving 1 vertically and 2 horizontally" do
-      
-#     end
+    it "catches illegal moves" do
+      b = Board.new
+      n = Knight.new(b, "white", 7, 6)
+      b.set_piece(n.row, n.col, n)
+      poss = n.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 4}).to eql(false)
+    end
 
-#     it "catches illegal moves" do
-      
-#     end
+    it "can capture enemies" do
+      b = Board.new
+      n = Knight.new(b, "white", 7, 6)
+      p = Pawn.new(b, "black", 5, 5)
+      b.set_piece(n.row, n.col, n)
+      b.set_piece(p.row, p.col, p)
+      poss = n.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 5}).to eql(true)
+    end
 
-#     it "can capture enemies" do
-      
-#     end
-#   end
-# end
+    it "doesn't allow capturing allies" do
+      b = Board.new
+      n = Knight.new(b, "white", 7, 6)
+      p = Pawn.new(b, "white", 5, 5)
+      b.set_piece(n.row, n.col, n)
+      b.set_piece(p.row, p.col, p)
+      poss = n.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 5}).to eql(false)
+    end
+  end
+end
 
 # describe Bishop do
 #   describe "#possible_moves" do
