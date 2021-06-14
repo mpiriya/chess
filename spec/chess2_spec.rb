@@ -263,39 +263,83 @@ end
 describe Queen do
   describe "#possible_moves" do
     it "doesn't allow moving to current square" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      b.set_piece(q.row, q.col, q)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 3}).to eql(false)
     end
 
     it "moves diagonally" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      b.set_piece(q.row, q.col, q)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 5}).to eql(true)
     end
 
     it "moves vertically" do
-
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      b.set_piece(q.row, q.col, q)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 0 && m.to_cell.col == 3}).to eql(true)
     end
 
     it "moves horizontally" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      b.set_piece(q.row, q.col, q)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 0}).to eql(true)
     end
 
     it "prevents illegal moves" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      b.set_piece(q.row, q.col, q)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 6 && m.to_cell.col == 7}).to eql(false)
     end
 
     it "doesn't move through enemies" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      pawn = Pawn.new(b, "black", 5, 3)
+      b.set_piece(q.row, q.col, q)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 4 && m.to_cell.col == 3}).to eql(false)
     end
 
     it "doesn't capture allies" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      pawn = Pawn.new(b, "white", 6, 2)
+      b.set_piece(q.row, q.col, q)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 6 && m.to_cell.col == 2}).to eql(false)
     end
 
     it "doesn't move through allies" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      pawn = Pawn.new(b, "white", 7, 2)
+      b.set_piece(q.row, q.col, q)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 7 && m.to_cell.col == 1}).to eql(false)
     end
 
     it "can capture enemies" do
-      
+      b = Board.new
+      q = Queen.new(b, "white", 7, 3)
+      pawn = Pawn.new(b, "black", 5, 3)
+      b.set_piece(q.row, q.col, q)
+      b.set_piece(pawn.row, pawn.col, pawn)
+      poss = q.possible_moves
+      expect(poss.any? {|m| m.to_cell.row == 5 && m.to_cell.col == 3}).to eql(true)
     end
   end
 end
