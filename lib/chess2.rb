@@ -68,9 +68,7 @@ class GameConroller
     if from_piece != nil && from_piece.isWhite == @current.isWhite
       # then checks if one of the legal moves match the desired move
       legal_moves.each do |possible_move|
-        if possible_move.from_cell.row == from_row && possible_move.from_cell.col == from_col 
-          && possible_move.to_cell.row == to_row && possible_move.to_cell.col == to_col
-
+        if possible_move.from_cell.row == from_row && possible_move.from_cell.col == from_col && possible_move.to_cell.row == to_row && possible_move.to_cell.col == to_col
           # move the piece
           possible_move.from_cell.piece.move(to_row, to_col)
           if possible_move.from_cell.piece.instance_of?(Pawn)
@@ -188,7 +186,13 @@ class Board
   end
 
   def set_piece(row, col, piece)
-    @board[row][col] = piece
+    @board[row][col].piece = piece
+  end
+
+  def to_s
+    to_ret = "-"*31 + "\n "
+    @board.each { |elem| to_ret += "#{elem.join(" | ")}\n" + "-"*31 + "\n "}
+    to_ret
   end
 end
 
@@ -200,13 +204,25 @@ class Cell
     @row = row
     @col = col
   end
+
+  def to_s
+    if piece == nil
+      return " "
+    else
+      return piece.to_s
+    end
+  end
 end
 
 class PossibleMove
   attr_reader :from_cell, :to_cell
   def initialize(from_cell, to_cell)
     @from_cell = from_cell
-    @to_file = to_cell
+    @to_cell = to_cell
+  end
+
+  def to_s
+    "Moving from board[#{from_cell.row}][#{from_cell.col}] to board[#{to_cell.row}][#{to_cell.col}]"
   end
 end
 
@@ -267,20 +283,23 @@ class Pawn < Piece
     to_ret = []
     dir = @isWhite ? -1 : 1
     #the one right in front of it
-    curr = @board.piece_at(row + dir, col)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr != nil
-
-    if !@has_moved
-      # the spot 2 in front of it if it hasn't moved yet
-      curr = @board.piece_at(row + 2*dir, col)
-      to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr != nil
+    curr = @board.cell_at(@row + dir, @col)
+    if curr.piece == nil
+      to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr.piece == nil
+      # it can only move 2 up if it can move one up
+      if !@has_moved
+        # the spot 2 in front of it if it hasn't moved yet
+        curr = @board.cell_at(@row + 2*dir, @col)
+        to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr.piece == nil
+      end
     end
+    
     # front-left
-    curr = @board.piece_at(row + dir, col - 1)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr.isWhite == @isWhite
+    curr = @board.piece_at(@row + dir, @col - 1)
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr != nil && curr.isWhite != @isWhite
     # front-right
-    curr = @board.piece_at(row + dir, col + 1)
-    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr.isWhite == @isWhite
+    curr = @board.piece_at(@row + dir, @col + 1)
+    to_ret << PossibleMove.new(@board.cell_at(@row, @col), curr) if curr != nil && curr.isWhite != @isWhite
 
     return to_ret
   end
@@ -419,3 +438,9 @@ class King < Piece
     @isWhite ? "K" : "K".light_blue
   end
 end
+
+b = Board.new
+p = Pawn.new(b, "white", 6, 6)
+b.set_piece(p.row, p.col, p)
+poss = p.possible_moves
+puts poss
