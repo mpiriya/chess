@@ -91,6 +91,10 @@ class GameConroller
       return false
     end
   end
+
+  def test
+    puts @current.all_legal_moves
+  end
 end
 
 class Player
@@ -101,8 +105,9 @@ class Player
   def initialize(board, color)
     @board = board
     @isWhite = color == "white"
+    @pieces = []
     if(@isWhite)
-      8.times {|i| @pawns << Pawn.new(board, "white", 6, i)}
+      8.times {|i| @pieces << Pawn.new(board, "white", 6, i)}
       @pieces << Rook.new(board, "white", 7, 0)
       @pieces << Rook.new(board, "white", 7, 7)
       @pieces << Knight.new(board, "white", 7, 1)
@@ -112,7 +117,7 @@ class Player
       @pieces << Queen.new(board, "white", 7, 3)
       @king = King.new(board, "white", 7, 4)
     else #color is black
-      8.times {|i| @pawns << Pawn.new(board, "black", 1, i)}
+      8.times {|i| @pieces << Pawn.new(board, "black", 1, i)}
       @pieces << Rook.new(board, "black", 0, 0)
       @pieces << Rook.new(board, "black", 0, 7)
       @pieces << Knight.new(board, "black", 0, 1)
@@ -134,22 +139,21 @@ class Player
     
     # test each move, and if it results in the player in check, remove it from the list
     to_remove = []
-    @to_ret.each do |possible_move|
+    to_ret.each do |possible_move|
       # save the piece's row and col
       prev_row = possible_move.from_cell.row
       prev_col = possible_move.from_cell.col
-      curr_piece = possible_moves.from_cell.piece
-
+      curr_piece = possible_move.from_cell.piece
       # move the piece at from_cell to the new square
       curr_piece.move(possible_move.to_cell.row, possible_move.to_cell.col)
 
       #is the player in check?
       if in_check?
-        # undo the move
-        curr_piece.move(prev_row, prev_col)
         # add it to the list of moves to be removed from to_ret
         to_remove << possible_move
       end
+      # undo the move
+      curr_piece.move(prev_row, prev_col)
     end
 
     #for each element in to_ret, delete if the element exists in the to_remove array
@@ -159,7 +163,7 @@ class Player
   end
 
   def in_check?
-    @otherPlayer.pieces.each do |piece|
+    @other_player.pieces.each do |piece|
       piece.possible_moves.each do |possible_move|
         return true if possible_move.to_cell.piece == @king
       end
@@ -222,7 +226,7 @@ class PossibleMove
   end
 
   def to_s
-    "Moving from board[#{from_cell.row}][#{from_cell.col}] to board[#{to_cell.row}][#{to_cell.col}]"
+    "Moving #{from_cell.piece} from [#{from_cell.row}][#{from_cell.col}] to [#{to_cell.row}][#{to_cell.col}]"
   end
 end
 
@@ -235,6 +239,7 @@ class Piece
     @isWhite = color == "white"
     @row = row
     @col = col
+    @board.set_piece(row, col, self)
   end
 
   def move(row, col)
@@ -408,14 +413,21 @@ class Queen < Piece
 end
 
 class King < Piece
+  attr_accessor :can_castle
   def possible_moves
     to_ret = []
+
+    # should allow castling, but not if it's through or into check
+
+    # king side
+
+    # queen side
 
     for i in -1..1 
       for j in -1..1
         if i != 0 || j != 0
-          curr = @board.piece_at(@row + i, @col + j)
-          to_ret << curr if curr.isWhite != @isWhite
+          curr = @board.cell_at(@row + i, @col + j)
+          to_ret << curr if curr != nil && curr.piece.isWhite != @isWhite
         end
       end
     end
@@ -423,13 +435,15 @@ class King < Piece
     return to_ret
   end
 
+  def move(row, col)
+    super.move(row, col)
+    @can_castle = false
+  end
+
   def to_s
     @isWhite ? "K" : "K".light_blue
   end
 end
 
-b = Board.new
-p = Pawn.new(b, "white", 6, 6)
-b.set_piece(p.row, p.col, p)
-poss = p.possible_moves
-puts poss
+gc = GameConroller.new
+gc.test
